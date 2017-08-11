@@ -4,7 +4,9 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Net.Security;
 using System.Net.Sockets;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -38,11 +40,12 @@ namespace Flexinets.Radius
         public async Task<IRadiusPacket> SendPacketAsync(IRadiusPacket packet, IPEndPoint remoteEndpoint, TimeSpan timeout)
         {
             await _client.ConnectAsync(remoteEndpoint.Address, remoteEndpoint.Port);
-            var stream = _client.GetStream();
+            var sslStream = new SslStream(_client.GetStream(), false, new RemoteCertificateValidationCallback(ValidateServerCertificate));
+            await sslStream.AuthenticateAsClientAsync("radsecserver");
             var packetBytes = packet.GetBytes(_dictionary);
-            await stream.WriteAsync(packetBytes, 0, packetBytes.Length);
+            await sslStream.WriteAsync(packetBytes, 0, packetBytes.Length);
 
-            if (RadiusPacket.TryParsePacketFromStream(stream, out var responsePacket, _dictionary, packet.SharedSecret))
+            if (RadiusPacket.TryParsePacketFromStream(sslStream, out var responsePacket, _dictionary, packet.SharedSecret))
             {
                 _client.Close();
                 return responsePacket;
@@ -62,6 +65,12 @@ namespace Flexinets.Radius
         public async Task<IRadiusPacket> SendPacketAsync(IRadiusPacket packet, IPEndPoint remoteEndpoint)
         {
             return await SendPacketAsync(packet, remoteEndpoint, TimeSpan.FromSeconds(3));
+        }
+
+
+        public static Boolean ValidateServerCertificate(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors)
+        {
+            return true;    // todo much secure, such hack            
         }
     }
 }
