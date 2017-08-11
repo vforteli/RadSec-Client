@@ -42,17 +42,14 @@ namespace Flexinets.Radius
             var packetBytes = packet.GetBytes(_dictionary);
             await stream.WriteAsync(packetBytes, 0, packetBytes.Length);
 
+            if (RadiusPacket.TryParsePacketFromStream(stream, out var responsePacket, _dictionary, packet.SharedSecret))
+            {
+                _client.Close();
+                return responsePacket;
+            }
 
-            var packetHeaderBytes = new Byte[4];
-
-            await stream.ReadAsync(packetHeaderBytes, 0, 4);
-
-            var length = BitConverter.ToUInt16(packetHeaderBytes.Skip(2).Take(2).Reverse().ToArray(), 0);
-
-            var packetContentBytes = new Byte[length - 4];
-            await stream.ReadAsync(packetContentBytes, 0, packetContentBytes.Length);
             _client.Close();
-            return RadiusPacket.Parse(packetHeaderBytes.Concat(packetContentBytes).ToArray(), _dictionary, packet.SharedSecret);
+            return null;
         }
 
 
