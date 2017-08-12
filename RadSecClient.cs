@@ -6,6 +6,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Security;
 using System.Net.Sockets;
+using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
@@ -16,6 +17,7 @@ namespace Flexinets.Radius
     {
         private readonly RadiusDictionary _dictionary;
         private readonly TcpClient _client;
+        private readonly X509CertificateCollection _certs = new X509CertificateCollection();
 
 
         /// <summary>
@@ -23,10 +25,11 @@ namespace Flexinets.Radius
         /// </summary>
         /// <param name="localEndpoint"></param>
         /// <param name="dictionary"></param>
-        public RadSecClient(RadiusDictionary dictionary)
+        public RadSecClient(RadiusDictionary dictionary, X509Certificate clientCertificate)
         {
             _dictionary = dictionary;
             _client = new TcpClient();
+            _certs.Add(clientCertificate);
         }
 
 
@@ -41,7 +44,7 @@ namespace Flexinets.Radius
         {
             await _client.ConnectAsync(remoteEndpoint.Address, remoteEndpoint.Port);
             var sslStream = new SslStream(_client.GetStream(), false, new RemoteCertificateValidationCallback(ValidateServerCertificate));
-            await sslStream.AuthenticateAsClientAsync("radsecserver");
+            await sslStream.AuthenticateAsClientAsync("radsecserver", _certs, SslProtocols.Tls12, true);
             var packetBytes = packet.GetBytes(_dictionary);
             await sslStream.WriteAsync(packetBytes, 0, packetBytes.Length);
 
