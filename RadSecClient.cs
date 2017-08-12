@@ -1,14 +1,10 @@
 ﻿using Flexinets.Radius.Core;
 using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net;
 using System.Net.Security;
 using System.Net.Sockets;
 using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Flexinets.Radius
@@ -18,18 +14,21 @@ namespace Flexinets.Radius
         private readonly RadiusDictionary _dictionary;
         private readonly TcpClient _client;
         private readonly X509CertificateCollection _certs = new X509CertificateCollection();
+        private readonly Boolean _trustServerCertificate;
 
 
         /// <summary>
         /// Create a radius client which sends and receives responses on localEndpoint
         /// </summary>
         /// <param name="localEndpoint"></param>
-        /// <param name="dictionary"></param>
-        public RadSecClient(RadiusDictionary dictionary, X509Certificate clientCertificate)
+        /// <param name="clientCertificate"></param>
+        /// <param name="trustServerCertificate">If set to true, server certificate will not be validated. This can be useful for testing with self signed certificates</param>
+        public RadSecClient(RadiusDictionary dictionary, X509Certificate clientCertificate, Boolean trustServerCertificate = false)
         {
             _dictionary = dictionary;
             _client = new TcpClient();
             _certs.Add(clientCertificate);
+            _trustServerCertificate = trustServerCertificate;
         }
 
 
@@ -71,9 +70,17 @@ namespace Flexinets.Radius
         }
 
 
-        public static Boolean ValidateServerCertificate(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors)
+        /// <summary>
+        /// Validate server certificate
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="certificate"></param>
+        /// <param name="chain"></param>
+        /// <param name="sslPolicyErrors"></param>
+        /// <returns></returns>
+        private Boolean ValidateServerCertificate(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors)
         {
-            return true;    // todo much secure, such hack            
+            return _trustServerCertificate || sslPolicyErrors == SslPolicyErrors.None;
         }
     }
 }
