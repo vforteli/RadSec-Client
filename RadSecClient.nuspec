@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<package >
+  <metadata>
+    <id>Flexinets.Radius.RadSecClient</id>
+    <version>$version$</version>
+    <title>$title$</title>
+    <authors>Verner Fortelius</authors>
+    <owners>vforteli</owners>
+    <licenseUrl>https://github.com/vforteli/RadSec-Client/blob/master/LICENSE.md</licenseUrl>
+    <projectUrl>https://github.com/vforteli/RadSec-Client</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>RadSec client. Send radius requests over RadSec (Radius/TLS)</description>
+    <releaseNotes>First nuget release</releaseNotes>
+    <copyright>Copyright 2017 Verner Fortelius</copyright>
+    <tags>Radius RadSec RadSec-Client Radius/TLS</tags>
+  </metadata>
+</package>
